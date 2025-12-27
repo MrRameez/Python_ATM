@@ -4,165 +4,189 @@ import random
 # -------------------------------
 # Session State Initialization
 # -------------------------------
-if "all_account" not in st.session_state:
-    st.session_state.all_account = []
+if "all_accounts" not in st.session_state:
+    st.session_state.all_accounts = []
 
 # -------------------------------
-# Backend logic
+# BankAccount Class (OOP)
+# -------------------------------
+class BankAccount:
+    def __init__(self, name, initial_deposit):
+        self.name = name
+        self.balance = initial_deposit
+        self.account_number = random.randint(1000, 9999)
+        self.pin = random.randint(1000, 9999)
+
+    # Deposit Method
+    def deposit(self, amount):
+        self.balance += amount
+        return self.balance
+
+    # Withdraw Method
+    def withdraw(self, amount, pin):
+        if pin != self.pin:
+            return None, "Invalid PIN"
+        if amount > self.balance:
+            return None, "Insufficient Balance"
+        self.balance -= amount
+        return self.balance, None
+
+    # Check Balance Method
+    def check_balance(self, pin):
+        if pin != self.pin:
+            return None, "Invalid PIN"
+        return self.balance, None
+
+    # Transfer Method
+    def transfer(self, amount, pin, beneficiary_account):
+        if pin != self.pin:
+            return None, "Invalid PIN"
+        if amount > self.balance:
+            return None, "Insufficient Balance"
+        self.balance -= amount
+        beneficiary_account.balance += amount
+        return self.balance, None
+
+# -------------------------------
+# Backend Functions
 # -------------------------------
 
-def open_account(cnic, account_title, initial_deposite):
-    account = {
-        'cnic': cnic,
-        'title': account_title,
-        'balance': initial_deposite,
-        'pin': random.randint(1000, 9999),
-        'account_number': random.randint(1000, 9999)
-    }
-    st.session_state.all_account.append(account)
-    return account
+def create_account(name, initial_deposit):
+    acc = BankAccount(name, initial_deposit)
+    st.session_state.all_accounts.append(acc)
+    return acc
 
-def show_balance(account_number, pin):
-    for acc in st.session_state.all_account:
-        if acc['account_number'] == account_number:
-            if acc['pin'] == pin:
-                return acc['balance'], None
-            else:
-                return None, "Invalid Pin"
-    return None, "Account Not found"
+def find_account(account_number):
+    for acc in st.session_state.all_accounts:
+        if acc.account_number == account_number:
+            return acc
+    return None
 
-def deposit_amount(account_number, amount):
-    for acc in st.session_state.all_account:
-        if acc['account_number'] == account_number:
-            acc['balance'] += amount
-            return acc['balance'], None
-    return None, "Account Not found"
-
-def withdraw_amt(account_number, pin, amount):
-    for acc in st.session_state.all_account:
-        if acc['account_number'] == account_number:
-            if acc['pin'] != pin:
-                return None, "Invalid Pin"
-            if amount > acc['balance']:
-                return None, "Insufficient Balance"
-            acc['balance'] -= amount
-            return acc['balance'], None
-    return None, "Account Not found"
-
-def transfer_amt(account_number, pin, amount, beneficiary_acc):
-    for acc in st.session_state.all_account:
-        if acc['account_number'] == account_number:
-            if acc['pin'] != pin:
-                return None, "Invalid Pin"
-            if acc['balance'] < amount:
-                return None, "Insufficient Balance"
-
-            for bacc in st.session_state.all_account:
-                if bacc['account_number'] == beneficiary_acc:
-                    acc['balance'] -= amount
-                    bacc['balance'] += amount
-                    return acc['balance'], None
-            return None, "Beneficiary account not found"
-    return None, "Account Not found"
+def delete_account(account_number, pin):
+    acc = find_account(account_number)
+    if acc:
+        if acc.pin != pin:
+            return "Invalid PIN"
+        st.session_state.all_accounts.remove(acc)
+        return "Account Deleted Successfully"
+    return "Account Not Found"
 
 # -------------------------------
 # Streamlit UI
 # -------------------------------
 
-st.title("🏦 Simple Banking System")
-st.write("This is a simple banking system built using Streamlit")
+st.title("🏦 Simple Banking System (OOP)")
+st.write("This is a beginner-friendly banking system using **Classes & Objects**")
 
 menu = st.sidebar.selectbox(
     "Select Action",
-    ['Open Account', 'Check Balance', 'Deposit', 'Withdraw', 'Transfer', 'Show All Accounts']
+    ["Open Account", "Check Balance", "Deposit", "Withdraw", "Transfer", "Delete Account", "Show All Accounts"]
 )
 
 # -------------------------------
 # Open Account
 # -------------------------------
-if menu == 'Open Account':
-    st.header('➕ Open a New Account')
-
-    cnic = st.text_input("Enter CNIC")
-    title = st.text_input("Account Title")
-    deposit = st.number_input("Initial Deposit", min_value=0)
-
+if menu == "Open Account":
+    st.header("➕ Open a New Account")
+    name = st.text_input("Enter Your Name")
+    initial_deposit = st.number_input("Initial Deposit", min_value=0)
     if st.button("Create Account"):
-        acc = open_account(cnic, title, deposit)
+        acc = create_account(name, initial_deposit)
         st.success("🎉 Account Created Successfully")
-        st.write(f"**Account Number:** `{acc['account_number']}`")
-        st.write(f"**PIN:** `{acc['pin']}` (Save this!)")
+        st.write(f"**Account Number:** `{acc.account_number}`")
+        st.write(f"**PIN:** `{acc.pin}` (Save this safely!)")
 
 # -------------------------------
 # Check Balance
 # -------------------------------
 elif menu == "Check Balance":
     st.header("💰 Check Balance")
-
     acc_no = st.number_input("Account Number", min_value=1000, max_value=9999)
     pin = st.number_input("PIN", min_value=1000, max_value=9999)
-
     if st.button("Show Balance"):
-        bal, err = show_balance(acc_no, pin)
-        if err:
-            st.error(err)
+        acc = find_account(acc_no)
+        if acc:
+            bal, err = acc.check_balance(pin)
+            if err:
+                st.error(err)
+            else:
+                st.success(f"Current Balance: Rs {bal}")
         else:
-            st.success(f"Your Current Balance is: **Rs {bal}**")
+            st.error("Account Not Found")
 
 # -------------------------------
 # Deposit
 # -------------------------------
 elif menu == "Deposit":
     st.header("📥 Deposit Amount")
-
     acc_no = st.number_input("Account Number", min_value=1000, max_value=9999)
     amt = st.number_input("Amount", min_value=1)
-
     if st.button("Deposit"):
-        bal, err = deposit_amount(acc_no, amt)
-        if err:
-            st.error(err)
+        acc = find_account(acc_no)
+        if acc:
+            bal = acc.deposit(amt)
+            st.success(f"Amount Deposited! New Balance: Rs {bal}")
         else:
-            st.success(f"Amount Deposited! New Balance: **Rs {bal}**")
+            st.error("Account Not Found")
 
 # -------------------------------
 # Withdraw
 # -------------------------------
 elif menu == "Withdraw":
     st.header("📤 Withdraw Amount")
-
     acc_no = st.number_input("Account Number", min_value=1000, max_value=9999)
     pin = st.number_input("PIN", min_value=1000, max_value=9999)
     amt = st.number_input("Amount", min_value=1)
-
     if st.button("Withdraw"):
-        bal, err = withdraw_amt(acc_no, pin, amt)
-        if err:
-            st.error(err)
+        acc = find_account(acc_no)
+        if acc:
+            bal, err = acc.withdraw(amt, pin)
+            if err:
+                st.error(err)
+            else:
+                st.success(f"Withdrawal Successful! New Balance: Rs {bal}")
         else:
-            st.success(f"Withdrawal Successful! New Balance: **Rs {bal}**")
+            st.error("Account Not Found")
 
 # -------------------------------
 # Transfer
 # -------------------------------
 elif menu == "Transfer":
     st.header("💸 Transfer Amount")
-
     acc_no = st.number_input("Your Account Number", min_value=1000, max_value=9999)
     pin = st.number_input("Your PIN", min_value=1000, max_value=9999)
     amt = st.number_input("Amount", min_value=1)
-    ben = st.number_input("Beneficiary Account Number", min_value=1000, max_value=9999)
-
+    ben_no = st.number_input("Beneficiary Account Number", min_value=1000, max_value=9999)
     if st.button("Transfer"):
-        bal, err = transfer_amt(acc_no, pin, amt, ben)
-        if err:
-            st.error(err)
+        acc = find_account(acc_no)
+        ben_acc = find_account(ben_no)
+        if acc and ben_acc:
+            bal, err = acc.transfer(amt, pin, ben_acc)
+            if err:
+                st.error(err)
+            else:
+                st.success(f"Transfer Successful! Remaining Balance: Rs {bal}")
         else:
-            st.success(f"Transfer Successful! Remaining Balance: **Rs {bal}**")
+            st.error("Account or Beneficiary Not Found")
 
 # -------------------------------
-# Show All Accounts
+# Delete Account
+# -------------------------------
+elif menu == "Delete Account":
+    st.header("❌ Delete Account")
+    acc_no = st.number_input("Account Number", min_value=1000, max_value=9999)
+    pin = st.number_input("PIN", min_value=1000, max_value=9999)
+    if st.button("Delete Account"):
+        msg = delete_account(acc_no, pin)
+        if "Successfully" in msg:
+            st.success(msg)
+        else:
+            st.error(msg)
+
+# -------------------------------
+# Show All Accounts (Debug)
 # -------------------------------
 elif menu == "Show All Accounts":
     st.header("📋 All Accounts (Debug View)")
-    st.write(st.session_state.all_account)
+    for acc in st.session_state.all_accounts:
+        st.write(f"Name: {acc.name}, Acc No: {acc.account_number}, Balance: {acc.balance}, PIN: {acc.pin}")
