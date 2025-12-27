@@ -1,29 +1,23 @@
 import streamlit as st
 import random
 
-# -------------------------------
-# Session State Initialization
-# -------------------------------
+# session state initialize karo
 if "all_accounts" not in st.session_state:
     st.session_state.all_accounts = []
 
-# -------------------------------
-# BankAccount Class (OOP)
-# -------------------------------
+# BankAccount class (OOP)  
 class BankAccount:
     def __init__(self, name, initial_deposit):
-        self.name = name
-        self.balance = initial_deposit
-        self.account_number = random.randint(1000, 9999)
-        self.pin = random.randint(1000, 9999)
+        self.name = name  # account holder ka name
+        self.balance = initial_deposit  # starting balance
+        self.account_number = random.randint(1000, 9999)  # unique account number
+        self.pin = random.randint(1000, 9999)  # account ka PIN
 
-    # Deposit Method
-    def deposit(self, amount):
+    def deposit(self, amount):  # paisa deposit karne ka function
         self.balance += amount
         return self.balance
 
-    # Withdraw Method
-    def withdraw(self, amount, pin):
+    def withdraw(self, amount, pin):  # paisa nikalne ka function
         if pin != self.pin:
             return None, "Invalid PIN"
         if amount > self.balance:
@@ -31,14 +25,12 @@ class BankAccount:
         self.balance -= amount
         return self.balance, None
 
-    # Check Balance Method
-    def check_balance(self, pin):
+    def check_balance(self, pin):  # balance check ka function
         if pin != self.pin:
             return None, "Invalid PIN"
         return self.balance, None
 
-    # Transfer Method
-    def transfer(self, amount, pin, beneficiary_account):
+    def transfer(self, amount, pin, beneficiary_account):  # paisa transfer ka function
         if pin != self.pin:
             return None, "Invalid PIN"
         if amount > self.balance:
@@ -47,21 +39,20 @@ class BankAccount:
         beneficiary_account.balance += amount
         return self.balance, None
 
-# -------------------------------
-# Backend Functions
-# -------------------------------
-
+# account create karne ka function
 def create_account(name, initial_deposit):
     acc = BankAccount(name, initial_deposit)
     st.session_state.all_accounts.append(acc)
     return acc
 
+# account find karne ka function
 def find_account(account_number):
     for acc in st.session_state.all_accounts:
         if acc.account_number == account_number:
             return acc
     return None
 
+# account delete karne ka function
 def delete_account(account_number, pin):
     acc = find_account(account_number)
     if acc:
@@ -71,21 +62,15 @@ def delete_account(account_number, pin):
         return "Account Deleted Successfully"
     return "Account Not Found"
 
-# -------------------------------
 # Streamlit UI
-# -------------------------------
-
 st.title("🏦 Simple Banking System (OOP)")
-st.write("This is a beginner-friendly banking system using **Classes & Objects**")
 
 menu = st.sidebar.selectbox(
     "Select Action",
     ["Open Account", "Check Balance", "Deposit", "Withdraw", "Transfer", "Delete Account", "Show All Accounts"]
 )
 
-# -------------------------------
 # Open Account
-# -------------------------------
 if menu == "Open Account":
     st.header("➕ Open a New Account")
     name = st.text_input("Enter Your Name")
@@ -96,9 +81,7 @@ if menu == "Open Account":
         st.write(f"**Account Number:** `{acc.account_number}`")
         st.write(f"**PIN:** `{acc.pin}` (Save this safely!)")
 
-# -------------------------------
 # Check Balance
-# -------------------------------
 elif menu == "Check Balance":
     st.header("💰 Check Balance")
     acc_no = st.number_input("Account Number", min_value=1000, max_value=9999)
@@ -114,9 +97,7 @@ elif menu == "Check Balance":
         else:
             st.error("Account Not Found")
 
-# -------------------------------
 # Deposit
-# -------------------------------
 elif menu == "Deposit":
     st.header("📥 Deposit Amount")
     acc_no = st.number_input("Account Number", min_value=1000, max_value=9999)
@@ -129,9 +110,7 @@ elif menu == "Deposit":
         else:
             st.error("Account Not Found")
 
-# -------------------------------
 # Withdraw
-# -------------------------------
 elif menu == "Withdraw":
     st.header("📤 Withdraw Amount")
     acc_no = st.number_input("Account Number", min_value=1000, max_value=9999)
@@ -148,9 +127,7 @@ elif menu == "Withdraw":
         else:
             st.error("Account Not Found")
 
-# -------------------------------
 # Transfer
-# -------------------------------
 elif menu == "Transfer":
     st.header("💸 Transfer Amount")
     acc_no = st.number_input("Your Account Number", min_value=1000, max_value=9999)
@@ -169,9 +146,7 @@ elif menu == "Transfer":
         else:
             st.error("Account or Beneficiary Not Found")
 
-# -------------------------------
 # Delete Account
-# -------------------------------
 elif menu == "Delete Account":
     st.header("❌ Delete Account")
     acc_no = st.number_input("Account Number", min_value=1000, max_value=9999)
@@ -183,9 +158,7 @@ elif menu == "Delete Account":
         else:
             st.error(msg)
 
-# -------------------------------
 # Show All Accounts (Debug)
-# -------------------------------
 elif menu == "Show All Accounts":
     st.header("📋 All Accounts (Debug View)")
     for acc in st.session_state.all_accounts:
